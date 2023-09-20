@@ -1,26 +1,51 @@
 version: "3"
 services:
-  postgres:
+  postgres1:
     image: postgres:15.1
     restart: always
     volumes: 
-      - db:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+      - db1:/var/lib/postgresql/data
+      - ./db/init-db1.sql:/docker-entrypoint-initdb.d/create_tables.sql
     environment:
       POSTGRES_PASSWORD: postgrespassword
     ports:
-    - "5432:5432"
-  graphql-api:
+    - "7432:5432"
+  postgres2:
+    image: postgres:15.1
+    restart: always
+    volumes: 
+      - db2:/var/lib/postgresql/data
+      - ./db/init-db2.sql:/docker-entrypoint-initdb.d/create_tables.sql
+    environment:
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+    - "8432:5432"
+  graphql-api-1:
     build: 
-      context: ./graphql-server
+      context: ./graphql-server-1
     depends_on:
-      - postgres
+      - postgres1
     volumes:
-      - ./graphql-server:/graphql-server
+      - ./graphql-server-1:/graphql-server
     environment:
       NODE_ENV: development
-      PG_CONNECTION_STRING: postgres://postgres:postgrespassword@host.docker.internal:5432/postgres 
-    ports: ['4000:4000'] 
+      PG_CONNECTION_STRING: postgres://postgres:postgrespassword@host.docker.internal:7432/postgres 
+      PORT: 8000
+    ports: ['9080:8000'] 
+  graphql-api-2:
+    build: 
+      context: ./graphql-server-2
+    depends_on:
+      - postgres2
+    volumes:
+      - ./graphql-server-2:/graphql-server
+    environment:
+      NODE_ENV: development
+      PG_CONNECTION_STRING: postgres://postgres:postgrespassword@host.docker.internal:8432/postgres 
+      PORT: 8000
+    ports: ['9090:8000'] 
 volumes:
-  db:
+  db1:
+    driver: local
+  db2:
     driver: local

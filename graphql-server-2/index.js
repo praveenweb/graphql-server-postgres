@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
+import { buildSubgraphSchema } from '@apollo/subgraph';
 import { PostgresDataSource } from "./postgresDataSource.js";
 import { typeDefs, scalarTypeDefs, scalarResolvers } from './typeDefs.js';
 import { resolvers } from './resolvers.js';
@@ -13,15 +14,8 @@ const knexConfig = {
   };
 
 const server = new ApolloServer({
-    typeDefs: [
-        ...scalarTypeDefs,
-        typeDefs
-    ],
-    resolvers: {
-        ...scalarResolvers,
-        ...resolvers
-    }
-})
+  schema: buildSubgraphSchema({typeDefs, resolvers}),
+});
   
 startStandaloneServer(server, {
     context: async () => {
@@ -32,4 +26,5 @@ startStandaloneServer(server, {
         },
       };
     },
+    listen: { port: process.env.PORT },
 }).then(({ url }) => console.log(`🚀 Server ready at ${url}`));
